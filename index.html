@@ -2849,6 +2849,7 @@ async function lkOk(){
   if(LK.mode === 'unlock'){
     if(LK.buf === S.pin){
       nbFromCache();
+      if(S.loggedIn && S.email){ lkUnlock(); if(!cloudUser) ensureCloudUser().catch(() => {}); return; }
       if(!cloudUser) await ensureCloudUser();
       if(cloudUser){ lkUnlock(); refreshCloudQuiet(); return; }
       /* اگر قبلاً وارد شده‌اید، با PIN درست همیشه باز شود (حتی اگر نشست ابری با VPN/اینترنت ضعیف خوانده نشد) */
@@ -4821,11 +4822,15 @@ document.addEventListener('click', async e => {
       else { LPSEL = null; render(); }
       break;
 
-        case 'lkKey':
+        case 'lkKey': {
+      const nowT = Date.now();
+      if(LK.lastKey === el.dataset.v && nowT - (LK.lastKeyT || 0) < 220) break;
+      LK.lastKey = el.dataset.v; LK.lastKeyT = nowT;
       if(LK.buf.length < lkMax() && !LK.busy){ LK.buf += el.dataset.v; LK.err = ''; }
       renderLock();
       if(LK.buf.length >= lkMax() && !LK.busy){ LK.busy = true; const lkEl = document.getElementById('lock'); lkEl.classList.add('lk-busy'); setTimeout(() => { LK.busy = false; lkEl.classList.remove('lk-busy'); lkOk(); }, 450); }
       break;
+    }
     case 'lkDel': if(!LK.busy){ LK.buf = LK.buf.slice(0, -1); renderLock(); } break;
     case 'lkOk': lkOk(); break;
     case 'authLogin': authLogin(); break;
