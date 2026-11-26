@@ -360,6 +360,13 @@ html,body{touch-action:pan-x pan-y;-ms-touch-action:pan-x pan-y}
 .ka-v.flash{color:#1e9e62;font-weight:600}
 .ka-act{display:flex;justify-content:flex-start;margin:10px 6px 0}
 .ka-btn{border:0;color:#fff;font:inherit;font-size:13px;font-weight:700;padding:8px 16px;min-width:96px;border-radius:999px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.ka-btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 18px;font:inherit;font-weight:700;color:#fff;cursor:pointer;transition:background .25s}
+.ka-btn.ok{background:#1e9e62}
+.ka-btn.chk{background:#e0a100}
+.ka-btn.bad{background:#c0392b}
+.ka-pulse{width:9px;height:9px;border-radius:50%;background:#fff;display:inline-block}
+.ka-btn.chk .ka-pulse{animation:kaBlink 1s infinite}
+@keyframes kaBlink{0%,100%{opacity:1}50%{opacity:.25}}
 .ka-btn.ok{background:#1e9e62}
 .ka-btn.bad{background:#c0392b}
 .mail-ok{display:inline-flex;align-items:center;gap:4px;flex:none;color:#1e7a4c;font-size:11px;font-weight:700;white-space:nowrap}
@@ -4114,9 +4121,16 @@ function kaText(){
 }
 /* سبز: آنلاین، یا اینکه آخرین بروزرسانی سرور خوانده شده و اینترنت وصل است (برنامه تراکنش‌ها را انجام می‌دهد) */
 function kaOn(){ return !!navigator.onLine && !!((cloudUser && cloudReady && LIVE_OK) || (KA.state === 'ok' && !!KA.t)); }
+/* وضعیت دکمه: سبز = آنلاین، زرد = در حال بررسی، قرمز = بدون اتصال (با زدن دکمه، بررسی دوباره انجام می‌شود) */
+function kaStatus(){
+  if(KA_BUSY || KA.state === 'loading') return 'chk';
+  return kaOn() ? 'on' : 'off';
+}
 function kaBtnHTML(){
-  const on = kaOn();
-  return `<button type="button" class="ka-btn ${on ? 'ok' : 'bad'}" id="ka-dot" onclick="kaRetry()">${on ? 'آنلاین' : 'وصل شو'}</button>`;
+  const st = kaStatus();
+  const label = st === 'chk' ? 'در حال بررسی' : st === 'on' ? 'آنلاین' : 'بدون اتصال';
+  const cls = st === 'on' ? 'ok' : st === 'chk' ? 'chk' : 'bad';
+  return `<button type="button" class="ka-btn ${cls}" id="ka-dot" onclick="kaRetry()"><span class="ka-pulse"></span>${label}</button>`;
 }
 function kaPaint(){
   const on0 = kaOn();
@@ -4127,9 +4141,9 @@ function kaPaint(){
   const el = document.getElementById('ka-v'), dot = document.getElementById('ka-dot');
   if(el) el.textContent = kaText();
   if(dot){
-    const on = kaOn();
-    dot.textContent = on ? 'آنلاین' : 'وصل شو';
-    dot.classList.toggle('ok', on); dot.classList.toggle('bad', !on);
+    const st = kaStatus();
+    dot.innerHTML = '<span class="ka-pulse"></span>' + (st === 'chk' ? 'در حال بررسی' : st === 'on' ? 'آنلاین' : 'بدون اتصال');
+    dot.classList.toggle('ok', st === 'on'); dot.classList.toggle('chk', st === 'chk'); dot.classList.toggle('bad', st === 'off');
   }
 }
 /* دکمهٔ قرمز: دستی دوباره به سرور وصل می‌شود */
