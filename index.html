@@ -3144,6 +3144,19 @@ function usageItems(){
     return { name: fa(i+1,0) + '. ' + c.n, pct, col, used, kb, cap: c.capTxt, rem, remKb, pTxt };
   });
 }
+/* مصرف سقف داخلی: جمع تقریبی همهٔ داده‌های برنامه (مشتری‌ها، تراکنش‌ها، طرف حساب‌ها، دخل و خرج، دفترچه‌ها و یادداشت‌ها) */
+function estBytes(v){ try{ return new Blob([typeof v === 'string' ? v : JSON.stringify(v)]).size; }catch(e){ return 0; } }
+function storageEstimateHTML(){
+  let total = 0;
+  try{ total += estBytes(S.parties || []); }catch(e){}
+  try{ total += estBytes(S.ledger || []); }catch(e){}
+  try{ total += estBytes(NB || []) + estBytes(NY || []); }catch(e){}
+  const kb = (total / 1024).toLocaleString('fa-IR', { maximumFractionDigits: 1 });
+  return `<div class="u-card" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+    <div><b style="font-size:15px">مصرف سقف داخلی</b><div style="font-size:12px;color:var(--muted);margin-top:4px">همهٔ تراکنش‌ها، مشتری‌ها، طرف حساب‌ها، دخل و خرج و یادداشت‌ها</div></div>
+    <b style="font-size:16px;white-space:nowrap">${kb} کیلوبایت</b>
+  </div>`;
+}
 function usageRowsHTML(){
   const u = usageGet();
   const rows = usageItems().map(it => `<div class="u-card">
@@ -3156,7 +3169,7 @@ function usageRowsHTML(){
       </div>
     </div>`).join('');
   const at = u.at ? new Date(u.at).toLocaleDateString('fa-IR') + ' · ' + new Date(u.at).toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
-  return `<div class="u-list">${rows}</div>
+  return `<div class="u-list">${rows}</div>${storageEstimateHTML()}
     <div class="hint" style="margin-top:8px">آخرین خواندن از سرور: ${at}</div>
     <button type="button" class="btn pri-btn" data-a="usageReload" style="margin-top:8px;width:100%">به‌روزرسانی از Supabase</button>`;
 }
@@ -4824,11 +4837,11 @@ document.addEventListener('click', async e => {
 
         case 'lkKey': {
       const nowT = Date.now();
-      if(LK.lastKey === el.dataset.v && nowT - (LK.lastKeyT || 0) < 220) break;
+      if(LK.lastKey === el.dataset.v && nowT - (LK.lastKeyT || 0) < 120) break;
       LK.lastKey = el.dataset.v; LK.lastKeyT = nowT;
       if(LK.buf.length < lkMax() && !LK.busy){ LK.buf += el.dataset.v; LK.err = ''; }
       renderLock();
-      if(LK.buf.length >= lkMax() && !LK.busy){ LK.busy = true; const lkEl = document.getElementById('lock'); lkEl.classList.add('lk-busy'); setTimeout(() => { LK.busy = false; lkEl.classList.remove('lk-busy'); lkOk(); }, 450); }
+      if(LK.buf.length >= lkMax() && !LK.busy){ LK.busy = true; const lkEl = document.getElementById('lock'); lkEl.classList.add('lk-busy'); setTimeout(() => { LK.busy = false; lkEl.classList.remove('lk-busy'); lkOk(); }, 60); }
       break;
     }
     case 'lkDel': if(!LK.busy){ LK.buf = LK.buf.slice(0, -1); renderLock(); } break;
